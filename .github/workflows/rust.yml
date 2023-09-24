@@ -1,0 +1,24 @@
+name: Rust
+
+on:
+  pull_request:
+    branches: [main] # mainブランチに対するPRで動作
+
+jobs:
+  check_fmt_and_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 # リポジトリをチェックアウト
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable # 使用するRustのバージョンを指定
+          override: true
+
+      - name: Check Formatting
+        run: |
+          cargo fmt -- --check # フォーマットの確認
+
+      - name: Build
+        run: |
+          cargo build --verbose # ビルド
