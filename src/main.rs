@@ -58,33 +58,4 @@ mod test {
 
         assert_eq!(body, "Hello World")
     }
-
-    // #[tokio::test]
-    // async fn should_return_user_data() {
-    //     let repository = BookRepositoryForMemory::new();
-    //     let req = Request::builder()
-    //         .uri("/books")
-    //         .method(Method::POST)
-    //         .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-    //         .body(Body::from(
-    //             r#"{ "name": "Rust Book",
-    //                         "isbn_code": "ABCD1234",
-    //                         "author": "MasaHero",
-    //                         "revision_number": 1,
-    //                         "publisher": "Rust Company",
-    //          }"#))
-    //         .unwrap();
-    //     let res = create_app(repository).oneshot(req).await.unwrap();
-    //     let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
-    //     let body: String = String::from_utf8(bytes.to_vec()).unwrap();
-    //     let user: User = serde_json::from_str(&body).expect("cannot convert User interface");
-    //
-    //     assert_eq!(
-    //         user,
-    //         User {
-    //             id: 1337,
-    //             name: "MasaHero".to_string()
-    //         }
-    //     )
-    // }
 }
