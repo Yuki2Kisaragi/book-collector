@@ -1,7 +1,8 @@
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    sync::{Arc, RwLock},
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 use thiserror::Error;
 
@@ -84,22 +85,66 @@ impl BookRepositoryForMemory {
             store: Arc::default(),
         }
     }
+
+    fn write_store_ref(&self) -> RwLockWriteGuard<BookData> {
+        self.store.write().unwrap()
+    }
+
+    fn read_store_ref(&self) -> RwLockReadGuard<BookData> {
+        self.store.read().unwrap()
+    }
 }
 
 impl BookRepository for BookRepositoryForMemory {
     fn create(&self, payload: CreateBook) -> Book {
-        todo!()
+        let mut store = self.write_store_ref();
+        let id = (store.len() + 1) as i32;
+        let book = Book::new(
+            id,
+            payload.name.clone(),
+            payload.isbn_code.clone(),
+            payload.author.clone(),
+            payload.revision_number.clone(),
+            payload.publisher.clone(),
+        );
+        store.insert(id, book.clone());
+        book
     }
+
     fn find(&self, id: i32) -> Option<Book> {
-        todo!()
+        let store = self.read_store_ref();
+        store.get(&id).map(|book| book.clone())
     }
+
     fn all(&self) -> Vec<Book> {
-        todo!()
+        let store = self.read_store_ref();
+        Vec::from_iter(store.values().map(|book| book.clone()))
     }
     fn update(&self, id: i32, payload: UpdateBook) -> anyhow::Result<Book> {
-        todo!()
+        let mut store = self.write_store_ref();
+        let book = store.get(&id).context(RepositoryError::NotFound(id))?;
+        let name = payload.name.unwrap_or(book.name.clone());
+        let isbn_code = payload.isbn_code.unwrap_or(book.isbn_code.clone());
+        let author = payload.author.unwrap_or(book.author.clone());
+        let revision_number = payload
+            .revision_number
+            .unwrap_or(book.revision_number.clone());
+        let publisher = payload.publisher.unwrap_or(book.publisher.clone());
+
+        let book = Book {
+            id,
+            name,
+            isbn_code,
+            author,
+            revision_number,
+            publisher,
+        };
+        store.insert(id, book.clone());
+        Ok(book)
     }
     fn delete(&self, id: i32) -> anyhow::Result<()> {
-        todo!()
+        let mut store = self.write_store_ref();
+        store.remove(&id).ok_or(RepositoryError::NotFound(id))?;
+        Ok(())
     }
 }
