@@ -148,3 +148,70 @@ impl BookRepository for BookRepositoryForMemory {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn todo_crud_scenario() {
+        let id = 1;
+        let name = "book_test".to_string();
+        let isbn_code = "isbn_code_test".to_string();
+        let author = "author_test".to_string();
+        let revision_number = 1;
+        let publisher = "publisher_test".to_string();
+
+        let expected = Book::new(
+            id.clone(),
+            name.clone(),
+            isbn_code.clone(),
+            author.clone(),
+            revision_number.clone(),
+            publisher.clone(),
+        );
+
+        // create
+        let repository = BookRepositoryForMemory::new();
+        let book = repository.create(CreateBook {
+            name,
+            isbn_code,
+            author,
+            revision_number,
+            publisher,
+        });
+        assert_eq!(expected, book);
+
+        // find
+        assert_eq!(expected, repository.find(id).unwrap());
+
+        // all
+        let books = repository.all();
+        assert_eq!(vec![expected], books);
+
+        // update
+        let updated_name = "book_test2".to_string();
+        let updated_isbn_code = "isbn_code_test2".to_string();
+        let updated_author = "author_test2".to_string();
+        let updated_revision_number = 2;
+        let updated_publisher = "publisher_test2".to_string();
+
+        let updated_book = repository
+            .update(
+                id,
+                UpdateBook {
+                    name: Some(updated_name.clone()),
+                    isbn_code: Some(updated_isbn_code.clone()),
+                    author: Some(updated_author.clone()),
+                    revision_number: Some(updated_revision_number.clone()),
+                    publisher: Some(updated_publisher.clone()),
+                },
+            )
+            .expect("failed update book");
+        assert_eq!(repository.find(id).unwrap(), updated_book);
+
+        // delete
+        let res = repository.delete(id);
+        assert!(res.is_ok());
+    }
+}
