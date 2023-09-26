@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use handlers::create_book;
+use handlers::{all_book, create_book, delete_book, find_book, update_book};
 use repositories::{BookRepository, BookRepositoryForMemory};
 use std::net::SocketAddr;
 use std::{env, sync::Arc};
