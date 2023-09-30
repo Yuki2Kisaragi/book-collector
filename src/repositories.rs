@@ -1,9 +1,10 @@
-use anyhow::Context;
-use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
+
+use anyhow::Context;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -11,6 +12,7 @@ enum RepositoryError {
     #[error("NotFound, id is {0}")]
     NotFound(i32),
 }
+
 pub trait BookRepository: Clone + std::marker::Send + std::marker::Sync + 'static {
     fn create(&self, payload: CreateBook) -> Book;
     fn find(&self, id: i32) -> Option<Book>;
@@ -41,6 +43,25 @@ pub struct CreateBook {
     revision_number: u32,
     publisher: String,
     // published_at: datetime
+}
+
+#[cfg(test)]
+impl CreateBook {
+    pub fn new(
+        name: String,
+        isbn_code: String,
+        author: String,
+        revision_number: u32,
+        publisher: String,
+    ) -> Self {
+        Self {
+            name,
+            isbn_code,
+            author,
+            revision_number,
+            publisher,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
@@ -79,6 +100,7 @@ type BookData = HashMap<i32, Book>;
 pub struct BookRepositoryForMemory {
     store: Arc<RwLock<BookData>>,
 }
+
 impl BookRepositoryForMemory {
     pub fn new() -> Self {
         BookRepositoryForMemory {

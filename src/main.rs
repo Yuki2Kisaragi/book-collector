@@ -52,6 +52,7 @@ async fn root() -> &'static str {
 
 #[cfg(test)]
 mod test {
+    use axum::http::StatusCode;
     use axum::response::Response;
     use axum::{
         body::Body,
@@ -120,5 +121,87 @@ mod test {
         let res = create_app(repository).oneshot(req.await).await.unwrap();
         let book = res_to_book(res).await;
         assert_eq!(expected, book);
+    }
+
+    #[tokio::test]
+    async fn should_find_book() {
+        let expected = Book::new(
+            1,
+            "created_book".to_string(),
+            "isbn_code".to_string(),
+            "author".to_string(),
+            1,
+            "publisher".to_string(),
+        );
+        let repository = BookRepositoryForMemory::new();
+        let req = build_book_req_with_empty("/books/1", Method::GET);
+        let res = create_app(repository).oneshot(req.await).await.unwrap();
+        let book = res_to_book(res).await;
+        assert_eq!(expected, book);
+    }
+
+    #[tokio::test]
+    async fn should_get_all_books() {
+        let expected = Book::new(
+            1,
+            "created_book".to_string(),
+            "isbn_code".to_string(),
+            "author".to_string(),
+            1,
+            "publisher".to_string(),
+        );
+        let repository = BookRepositoryForMemory::new();
+        let req = build_book_req_with_empty("/books", Method::GET);
+        let res = create_app(repository).oneshot(req.await).await.unwrap();
+        let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
+        let body: String = String::from_utf8(bytes.to_vec()).unwrap();
+        let books: Vec<Book> = serde_json::from_str(&body)
+            .expect(&format!("cannot convert Book instance. body: {}", body));
+        assert_eq!(vec![expected], books);
+    }
+
+    #[tokio::test]
+    async fn should_update_book() {
+        let expected = Book::new(
+            1,
+            "updated_book".to_string(),
+            "isbn_code2".to_string(),
+            "author2".to_string(),
+            2,
+            "publisher2".to_string(),
+        );
+        let repository = BookRepositoryForMemory::new();
+        let req = build_book_req_with_json(
+            "/books/1",
+            Method::PATCH,
+            r#"{
+            "id": 1,
+            "name": "updated_book",
+            "isbn_code": "isbn_code2",
+            "author": "author2",
+            "revision_number": 2,
+            "publisher": "publisher2"
+            }"#
+            .to_string(),
+        );
+        let res = create_app(repository).oneshot(req.await).await.unwrap();
+        let book = res_to_book(res).await;
+        assert_eq!(expected, book);
+    }
+
+    #[tokio::test]
+    async fn should_delete_book() {
+        let expected = Book::new(
+            1,
+            "created_book".to_string(),
+            "isbn_code".to_string(),
+            "author".to_string(),
+            1,
+            "publisher".to_string(),
+        );
+        let repository = BookRepositoryForMemory::new();
+        let req = build_book_req_with_empty("/books/1", Method::DELETE);
+        let res = create_app(repository).oneshot(req.await).await.unwrap();
+        assert_eq!(StatusCode::NO_CONTENT, res.status());
     }
 }
