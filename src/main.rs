@@ -196,7 +196,6 @@ mod test {
             "/books/1",
             Method::PATCH,
             r#"{
-            "id": 1,
             "name": "updated_book",
             "isbn_code": "isbn_code2",
             "author": "author2",
