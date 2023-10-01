@@ -1,7 +1,13 @@
 use std::sync::Arc;
 
-use axum::{async_trait, extract::{Extension, Path}, http::StatusCode, Json, response::IntoResponse};
 use axum::extract::{FromRequest, RequestParts};
+use axum::{
+    async_trait,
+    extract::{Extension, Path},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 use serde::de::DeserializeOwned;
 use tower::BoxError;
 use validator::Validate;
@@ -12,7 +18,8 @@ use crate::repositories::{BookRepository, CreateBook, UpdateBook};
 pub struct ValidatedJson<T>(T);
 
 #[async_trait]
-impl<T, B> FromRequest<B> for ValidatedJson<T> where
+impl<T, B> FromRequest<B> for ValidatedJson<T>
+where
     T: DeserializeOwned + Validate,
     B: http_body::Body + Send,
     B::Data: Send,
