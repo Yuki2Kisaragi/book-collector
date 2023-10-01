@@ -4,11 +4,13 @@ build:
 db:
 	docker-compose up
 
-dev:
-	cargo watch -x run
-
 test:
 	cargo test
 
 fmt:
 	cargo fmt
+
+dev:
+	sqlx db create
+	sqlx migrate run
+	cargo watch -x run
