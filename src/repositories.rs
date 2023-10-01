@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Context;
+use axum::async_trait;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use validator::Validate;
@@ -14,12 +15,13 @@ enum RepositoryError {
     NotFound(i32),
 }
 
+#[async_trait]
 pub trait BookRepository: Clone + std::marker::Send + std::marker::Sync + 'static {
-    fn create(&self, payload: CreateBook) -> Book;
-    fn find(&self, id: i32) -> Option<Book>;
-    fn all(&self) -> Vec<Book>;
-    fn update(&self, id: i32, payload: UpdateBook) -> anyhow::Result<Book>;
-    fn delete(&self, id: i32) -> anyhow::Result<()>;
+    async fn create(&self, payload: CreateBook) -> anyhow::Result<Book>;
+    async fn find(&self, id: i32) -> anyhow::Result<Book>;
+    async fn all(&self) -> anyhow::Result<Vec<Book>>;
+    async fn update(&self, id: i32, payload: UpdateBook) -> anyhow::Result<Book>;
+    async fn delete(&self, id: i32) -> anyhow::Result<()>;
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -144,8 +146,9 @@ impl BookRepositoryForMemory {
     }
 }
 
+#[async_trait]
 impl BookRepository for BookRepositoryForMemory {
-    fn create(&self, payload: CreateBook) -> Book {
+    async fn create(&self, payload: CreateBook) -> anyhow::Result<Book> {
         let mut store = self.write_store_ref();
         let id = (store.len() + 1) as i32;
         let book = Book::new(
@@ -157,19 +160,23 @@ impl BookRepository for BookRepositoryForMemory {
             payload.publisher.clone(),
         );
         store.insert(id, book.clone());
-        book
+        Ok(book)
     }
 
-    fn find(&self, id: i32) -> Option<Book> {
+    async fn find(&self, id: i32) -> anyhow::Result<Book> {
         let store = self.read_store_ref();
-        store.get(&id).map(|book| book.clone())
+        let book = store
+            .get(&id)
+            .map(|book| book.clone())
+            .ok_or(RepositoryError::NotFound(id))?;
+        Ok(book)
     }
 
-    fn all(&self) -> Vec<Book> {
+    async fn all(&self) -> anyhow::Result<Vec<Book>> {
         let store = self.read_store_ref();
-        Vec::from_iter(store.values().map(|book| book.clone()))
+        Ok(Vec::from_iter(store.values().map(|book| book.clone())))
     }
-    fn update(&self, id: i32, payload: UpdateBook) -> anyhow::Result<Book> {
+    async fn update(&self, id: i32, payload: UpdateBook) -> anyhow::Result<Book> {
         let mut store = self.write_store_ref();
         let book = store.get(&id).context(RepositoryError::NotFound(id))?;
         let name = payload.name.unwrap_or(book.name.clone());
@@ -191,7 +198,7 @@ impl BookRepository for BookRepositoryForMemory {
         store.insert(id, book.clone());
         Ok(book)
     }
-    fn delete(&self, id: i32) -> anyhow::Result<()> {
+    async fn delete(&self, id: i32) -> anyhow::Result<()> {
         let mut store = self.write_store_ref();
         store.remove(&id).ok_or(RepositoryError::NotFound(id))?;
         Ok(())
@@ -202,8 +209,8 @@ impl BookRepository for BookRepositoryForMemory {
 mod test {
     use super::*;
 
-    #[test]
-    fn todo_crud_scenario() {
+    #[tokio::test]
+    async fn todo_crud_scenario() {
         let id = 1;
         let name = "book_test".to_string();
         let isbn_code = "isbn_code_test".to_string();
@@ -222,20 +229,24 @@ mod test {
 
         // create
         let repository = BookRepositoryForMemory::new();
-        let book = repository.create(CreateBook {
-            name,
-            isbn_code,
-            author,
-            revision_number,
-            publisher,
-        });
+        let book = repository
+            .create(CreateBook {
+                name,
+                isbn_code,
+                author,
+                revision_number,
+                publisher,
+            })
+            .await
+            .expect("failed create book");
         assert_eq!(expected, book);
 
         // find
-        assert_eq!(expected, repository.find(id).unwrap());
+        let book = repository.find(book.id).await.unwrap();
+        assert_eq!(expected, book);
 
         // all
-        let books = repository.all();
+        let books = repository.all().await.expect("failed get all books");
         assert_eq!(vec![expected], books);
 
         // update
@@ -256,11 +267,12 @@ mod test {
                     publisher: Some(updated_publisher.clone()),
                 },
             )
+            .await
             .expect("failed update book");
-        assert_eq!(repository.find(id).unwrap(), updated_book);
+        assert_eq!(repository.find(id).await.unwrap(), updated_book);
 
         // delete
-        let res = repository.delete(id);
+        let res = repository.delete(id).await;
         assert!(res.is_ok());
     }
 }

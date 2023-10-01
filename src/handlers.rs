@@ -44,24 +44,27 @@ where
 pub async fn create_book<T: BookRepository>(
     ValidatedJson(payload): ValidatedJson<CreateBook>,
     Extension(repository): Extension<Arc<T>>,
-) -> impl IntoResponse {
-    let book = repository.create(payload);
-    (StatusCode::CREATED, Json(book))
+) -> Result<impl IntoResponse, StatusCode> {
+    let book = repository
+        .create(payload)
+        .await
+        .or(Err(StatusCode::NOT_FOUND))?;
+    Ok((StatusCode::CREATED, Json(book)))
 }
 
 pub async fn find_book<T: BookRepository>(
     Path(id): Path<i32>,
     Extension(repository): Extension<Arc<T>>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let book = repository.find(id).ok_or(StatusCode::NOT_FOUND)?;
+    let book = repository.find(id).await.or(Err(StatusCode::NOT_FOUND))?;
     Ok((StatusCode::OK, Json(book)))
 }
 
 pub async fn all_book<T: BookRepository>(
     Extension(repository): Extension<Arc<T>>,
-) -> impl IntoResponse {
-    let book = repository.all();
-    (StatusCode::OK, Json(book))
+) -> Result<impl IntoResponse, StatusCode> {
+    let book = repository.all().await.unwrap();
+    Ok((StatusCode::OK, Json(book)))
 }
 
 pub async fn update_book<T: BookRepository>(
@@ -71,6 +74,7 @@ pub async fn update_book<T: BookRepository>(
 ) -> Result<impl IntoResponse, StatusCode> {
     let book = repository
         .update(id, payload)
+        .await
         .or(Err(StatusCode::NOT_FOUND))?;
     Ok((StatusCode::CREATED, Json(book)))
 }
@@ -81,6 +85,7 @@ pub async fn delete_book<T: BookRepository>(
 ) -> StatusCode {
     repository
         .delete(id)
+        .await
         .map(|_| StatusCode::NO_CONTENT)
         .unwrap_or(StatusCode::NOT_FOUND)
 }

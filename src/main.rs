@@ -134,13 +134,16 @@ mod test {
             "publisher".to_string(),
         );
         let repository = BookRepositoryForMemory::new();
-        repository.create(CreateBook::new(
-            "created_book".to_string(),
-            "isbn_code".to_string(),
-            "author".to_string(),
-            1,
-            "publisher".to_string(),
-        ));
+        repository
+            .create(CreateBook::new(
+                "created_book".to_string(),
+                "isbn_code".to_string(),
+                "author".to_string(),
+                1,
+                "publisher".to_string(),
+            ))
+            .await
+            .expect("failed create book");
         let req = build_book_req_with_empty("/books/1", Method::GET);
         let res = create_app(repository).oneshot(req.await).await.unwrap();
         let book = res_to_book(res).await;
@@ -158,13 +161,16 @@ mod test {
             "publisher".to_string(),
         );
         let repository = BookRepositoryForMemory::new();
-        repository.create(CreateBook::new(
-            "created_book".to_string(),
-            "isbn_code".to_string(),
-            "author".to_string(),
-            1,
-            "publisher".to_string(),
-        ));
+        repository
+            .create(CreateBook::new(
+                "created_book".to_string(),
+                "isbn_code".to_string(),
+                "author".to_string(),
+                1,
+                "publisher".to_string(),
+            ))
+            .await
+            .expect("failed create book");
         let req = build_book_req_with_empty("/books", Method::GET);
         let res = create_app(repository).oneshot(req.await).await.unwrap();
         let bytes = hyper::body::to_bytes(res.into_body()).await.unwrap();
@@ -185,13 +191,16 @@ mod test {
             "publisher2".to_string(),
         );
         let repository = BookRepositoryForMemory::new();
-        repository.create(CreateBook::new(
-            "created_book".to_string(),
-            "isbn_code".to_string(),
-            "author".to_string(),
-            1,
-            "publisher".to_string(),
-        ));
+        repository
+            .create(CreateBook::new(
+                "created_book".to_string(),
+                "isbn_code".to_string(),
+                "author".to_string(),
+                1,
+                "publisher".to_string(),
+            ))
+            .await
+            .expect("failed create book");
         let req = build_book_req_with_json(
             "/books/1",
             Method::PATCH,
@@ -212,13 +221,16 @@ mod test {
     #[tokio::test]
     async fn should_delete_book() {
         let repository = BookRepositoryForMemory::new();
-        repository.create(CreateBook::new(
-            "created_book".to_string(),
-            "isbn_code".to_string(),
-            "author".to_string(),
-            1,
-            "publisher".to_string(),
-        ));
+        repository
+            .create(CreateBook::new(
+                "created_book".to_string(),
+                "isbn_code".to_string(),
+                "author".to_string(),
+                1,
+                "publisher".to_string(),
+            ))
+            .await
+            .expect("failed create book");
         let req = build_book_req_with_empty("/books/1", Method::DELETE);
         let res = create_app(repository).oneshot(req.await).await.unwrap();
         assert_eq!(StatusCode::NO_CONTENT, res.status());
