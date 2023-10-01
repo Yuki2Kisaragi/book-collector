@@ -1,12 +1,12 @@
-use std::net::SocketAddr;
 use std::{env, sync::Arc};
+use std::net::SocketAddr;
 
 use anyhow::Context;
 use axum::{
     extract::Extension,
     response::IntoResponse,
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 
 use handlers::{all_book, create_book, delete_book, find_book, update_book};
@@ -52,12 +52,12 @@ async fn root() -> &'static str {
 
 #[cfg(test)]
 mod test {
-    use axum::http::StatusCode;
-    use axum::response::Response;
     use axum::{
         body::Body,
         http::{header, Method, Request},
     };
+    use axum::http::StatusCode;
+    use axum::response::Response;
     use tower::ServiceExt;
 
     use crate::repositories::{Book, CreateBook};
@@ -116,7 +116,7 @@ mod test {
             "revision_number": 1,
             "publisher": "publisher"
             }"#
-            .to_string(),
+                .to_string(),
         );
         let res = create_app(repository).oneshot(req.await).await.unwrap();
         let book = res_to_book(res).await;
@@ -196,14 +196,13 @@ mod test {
             "/books/1",
             Method::PATCH,
             r#"{
-            "id": 1,
             "name": "updated_book",
             "isbn_code": "isbn_code2",
             "author": "author2",
             "revision_number": 2,
             "publisher": "publisher2"
             }"#
-            .to_string(),
+                .to_string(),
         );
         let res = create_app(repository).oneshot(req.await).await.unwrap();
         let book = res_to_book(res).await;

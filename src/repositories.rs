@@ -6,6 +6,7 @@ use std::{
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use validator::Validate;
 
 #[derive(Debug, Error)]
 enum RepositoryError {
@@ -35,12 +36,25 @@ pub struct Book {
     // updated_at:datetime
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Validate)]
 pub struct CreateBook {
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     name: String,
+
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     isbn_code: String,
+
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     author: String,
+
+    #[validate(range(min = 1))]
     revision_number: u32,
+
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     publisher: String,
     // published_at: datetime
 }
@@ -64,12 +78,25 @@ impl CreateBook {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Validate)]
 pub struct UpdateBook {
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     name: Option<String>,
+
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     isbn_code: Option<String>,
+
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     author: Option<String>,
+
+    #[validate(range(min = 1))]
     revision_number: Option<u32>,
+
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(max = 100, message = "Over string length"))]
     publisher: Option<String>,
     // published_at: datetime
 }
